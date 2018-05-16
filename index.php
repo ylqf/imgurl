@@ -1,55 +1,61 @@
 <?php
-	//载入header
-	include_once('./header.php');
+    $title = "ImgURL - 简单、纯粹的图床程序。";
+    include_once("./tpl/user/header.php");
 ?>
-	<div style = "clear:both;"></div>
-	<div class="container" style = "margin-bottom:40px;">
-		<div class="row">
-			<div class="col-lg-10 col-md-offset-1">
-				<div id="fileuploader">Upload</div>
-			</div>
-		</div>
-	</div>
-	<!--上传成功后-->
-	<div class="container" style = "margin-bottom:40px;">
-		<div class="row">
-			<div class="col-lg-10 col-md-offset-1">
-				<!--显示-->
-					<div class="table-responsive" id = "relink">
-					  <table class="table">
-					    <tbody>
-					      <tr>
-					        <td width = "15%">URL</td>
-					        <td width = "75%"><input type="text" id = "linkurl" class="form-control"></td>
-					        <td width = "10%"><a href="javascript:;" class="btn btn-info" onclick = "copy('linkurl');">复制</a></td>
-					      </tr>
-					     <tr>
-					        <td>HTML</td>
-					        <td><input type="text" id = "htmlurl" class="form-control"></td>
-					        <td><a href="javascript:;" class="btn btn-info" onclick = "copy('htmlurl');">复制</a></td>
-					      </tr>
-					      <tr>
-					        <td>MarkDown</td>
-					        <td><input type="text" id = "mdurl" class="form-control"></td>
-					        <td><a href="javascript:;" class="btn btn-info" onclick = "copy('mdurl');">复制</a></td>
-					      </tr>
-					      <tr>
-					        <td>BBcode</td>
-					        <td><input type="text" id = "bbcode" class="form-control"></td>
-					        <td><a href="javascript:;" class="btn btn-info" onclick = "copy('bbcode');">复制</a></td>
-					      </tr>
-					    </tbody>
-					  </table>
-					  <div id = "img-box">
-						  <a href="" id = "img-url" target = "_blank"><img id = "show_img" src="" alt="" class = "img-responsive center-block img-thumbnail" width = "100%;" height = "100%;"></a>
-					  </div>
-					</div>
-				<!--显示-->
-			</div>
-		</div>
-	</div>
-	<!--上传成功END-->
+
+<div class="layui-container">
+    <div class="layui-row">
+        <div class="layui-col-lg12 layui-col-xs10">
+        <div class="msg"><i class="layui-icon">&#xe645;</i>  注意：您上传的图片将会公开显示，勿上传隐私图片。游客限制每天5张，最大支持2M</div>
+            <!-- 上传图片表单 -->
+            <div class="layui-upload-drag" id="upimg">
+                <i class="layui-icon">&#xe67c;</i>
+                <p>点击上传，或将图片拖拽到此处</p>
+            </div>
+            <!-- 上传图片表单END -->
+        </div>
+    </div>
+    <div style = "clear:both;"></div>
+    <!-- 图片上传成功 -->
+    <div class="layui-row" id = "upok"> 
+        <div>
+            <div id="showpic" class = "layui-col-lg5"><a href="" target = "_blank"><img src=""></a></div>
+            <div id="piclink" class = "layui-col-lg6 layui-col-md-offset1">
+            <table class="layui-table" lay-skin="nob">
+                <colgroup>
+                    <col width="80">
+                    <col width="400">
+                    <col>
+                </colgroup>
+                <tbody>
+                    <tr>
+                        <td>URL</td>
+                        <td><input type="text" class="layui-input" id = "url"></td>
+                        <td><a href="javascript:;" class = "layui-btn layui-btn-sm" onclick = "copy('url')">复制</a></td>
+                    </tr>
+                    <tr>
+                        <td>HTML</td>
+                        <td><input type="text" class="layui-input" id = "html"></td>
+                        <td><a href="javascript:;" class = "layui-btn layui-btn-sm" onclick = "copy('html')">复制</a></td>
+                    </tr>
+                    <tr>
+                        <td>MarkDown</td>
+                        <td><input type="text" class="layui-input" id = "markdown"></td>
+                        <td><a href="javascript:;" class = "layui-btn layui-btn-sm" onclick = "copy('markdown')">复制</a></td>
+                    </tr>
+                    <tr>
+                        <td>BBcode</td>
+                        <td><input type="text" class="layui-input" id = "bbcode"></td>
+                        <td><a href="javascript:;" class = "layui-btn layui-btn-sm" onclick = "copy('bbcode')">复制</a></td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+        </div>       
+    </div>
+    <!-- 图片上传成功END -->
+</div>
+
 <?php
-	//载入页脚
-	include_once('./footer.php');
+    include_once("./tpl/user/footer.php");
 ?>
