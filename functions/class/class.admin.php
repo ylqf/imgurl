@@ -25,7 +25,15 @@
             } 
         }
         //查询图片
-        function querypic($type,$page){
+        function querypic($type,$page,$date = null){
+	        //对时间进行拆分
+	        if($date != null){
+		        $date = explode("|",$date);
+		        
+		        $starttime = $date[0];
+		        $endttime = $date[1];
+	        }
+	        
             $config = $this->config;
             $database = $this->database;
 
@@ -68,9 +76,67 @@
                         "LIMIT" => [$start,$num]
                     ]);
                     return $datas;
+                    break;
+                case 'unidentification':
+                 	$datas = $database->select("imginfo", "*", [
+                        "level" => null,
+                        "ORDER" => ["id" => "DESC"],
+                        "LIMIT" => [$start,$num]
+                    ]);
+                    return $datas;
+                    break;
+                default:
+                    $sql = "SELECT * FROM imginfo WHERE date(date) BETWEEN '$starttime' AND '$endttime' ORDER BY `id` DESC LIMIT $num OFFSET $start";
+                    
+                    $datas = $database->query($sql);
+                    return $datas;
+                    break;
+            }
+        }
+        //新版查询图片
+        function newquery($type,$date = null){
+	        //echo $type;
+	        //exit;
+	        //获取当前时间
+	        $thetime = date('Y-m',time());
+	        //对时间进行拆分
+	        if($date != null){
+		        $date = explode("|",$date);
+		        
+		        $starttime = $date[0];
+		        $endttime = $date[1];
+	        }
+	        
+            $config = $this->config;
+            $database = $this->database;
+
+            //判断类型
+            switch ($type) {
+                case 'user':
+                    // echo 'dsd';
+                    $datas = $database->select("imginfo", "*", [
+                        "dir" 	=> $config['userdir'],
+                        "date[~]"	=> $thetime,
+                        "ORDER" => ["id" => "DESC"]
+                    ]);
+                    // var_dump( $database->log() );
+                    // exit;
+                    return $datas;  
+                    break;
+                case 'admin':
+                    $datas = $database->select("imginfo", "*", [
+                        "dir" => $config['admindir'],
+                        "date[~]"	=> $thetime,
+                        "ORDER" => ["id" => "DESC"]
+                    ]);
+                    return $datas;
                     break; 
                 default:
-                    echo 'dsddsd';
+                    $sql = "SELECT * FROM imginfo WHERE date(date) BETWEEN '$starttime' AND '$endttime' ORDER BY `id` DESC";
+                    
+                    $datas = $database->query($sql);
+                    //var_dump($database->log());
+                    return $datas;
                     break;
             }
         }
@@ -87,19 +153,15 @@
             //完整的图片路径
             $imgpath = APP.$path;
             //如果图片删除成功，将再次删除数据库
-            
-            if(unlink($imgpath)) {
-                $del = $database->delete("imginfo", [
-                    "AND" => [
-                        "id" => $id
-                    ]
-                ]);
-                echo 'ok';
-            }
-            else{
-                echo '删除失败！';
-            }
-            
+            //删除图片
+            unlink($imgpath);
+            //删除数据库
+            $del = $database->delete("imginfo", [
+                "AND" => [
+                    "id" => $id
+                ]
+            ]);
+            echo 'ok';
         }
         //统计数据
         function data() {
@@ -121,12 +183,15 @@
             $level = $this->database->count("imginfo",[
                 "level"  =>  3
             ]);
+            //统计全部图片
+            $all = $this->database->count("imginfo");
             
             //返回数据
             $redata = array(
                 "month" =>  $month,
                 "day"   =>  $day,
-                "level" =>  $level
+                "level" =>  $level,
+                "all"	=>	$all
             );
             return $redata;
         }
@@ -207,6 +272,114 @@
             $html = curl_exec($curl);
             curl_close($curl);
             echo 'ok';
+        }
+        //通过URL批量上传图片
+        function urlup($arr){
+	        $config = $this->config;
+	        //$arr参数为一个数组
+	        $arr = explode("\n",$arr);
+	        //计算URL个数
+			$urlnum = count($arr);
+	        //不能超过10个
+	        if($urlnum > 10){
+		        $rejson = array(
+		        	"code"		=> 	0,
+		        	"msg"		=>	"URL链接不能超过10个！"
+		        );
+		        echo json_encode($rejson);
+		        exit;
+	        }
+			
+	        //遍历URL并下载图片
+	        foreach( $arr as $url )
+	        {
+		        //去掉空格
+		        $url = trim($url);
+		        //判断是否是URL
+		        if(!filter_var($url, FILTER_VALIDATE_URL)){
+			        $rejson = array(
+			        	"code"		=> 	0,
+			        	"msg"		=>	$url."不是有效的地址，程序终止！"
+			        );
+			        echo json_encode($rejson);
+			        exit;
+		        }
+	        	//获取图片后缀
+	        	$suffix = explode(".",$url);
+	        	$suffix = end($suffix);
+	        	$suffix = strtolower($suffix);
+
+	        	//如果是图片后缀，使用curl进行抓取
+	        	if(($suffix == 'jpg') || ($suffix == 'jpeg') || ($suffix == 'png') || ($suffix == 'bmp') || ($suffix == 'gif')) {
+		        	
+				    $curl = curl_init($url);
+
+				    curl_setopt($curl, CURLOPT_USERAGENT, "Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)");
+				    curl_setopt($curl, CURLOPT_FAILONERROR, true);
+				    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+				    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+				    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+				    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+				    #设置超时时间，最小为1s（可选）
+				    curl_setopt($curl , CURLOPT_TIMEOUT, 10);
+
+				    $html = curl_exec($curl);
+				    curl_close($curl);
+				    
+					//判断目录是否存在
+					$dir = APP.$config['admindir'].'/'.date('ym',time());
+					if(!is_dir($dir)){
+						mkdir($dir);
+					}
+					//生成文件名
+					$filenme = $dir.date('Y-m-d H:i:s',time()).$suffix;
+					$filenme = substr(md5($url.$filenme), 8, 16).'.'.$suffix;
+
+					$full = $dir.'/'.$filenme;
+					//写入文件
+					$myfile = fopen($full, "w") or die("Unable to open file!");
+					fwrite($myfile, $html);
+					fclose($myfile);
+					$datas = array(
+						"path"		=>	$config['admindir'].'/'.date('ym',time()).'/'.$filenme,
+						"dir"		=>	$config['admindir']
+					);
+					//写入数据库
+					$insert = $this->indb($datas);
+					
+	        	}
+	        	else{
+		        	$rejson = array(
+			        	"code"		=> 	0,
+			        	"msg"		=>	"包含无效的图片地址，程序终止！"
+			        );
+			        echo json_encode($rejson);
+		        	exit;
+	        	}
+	        	
+	        }
+	        $rejson = array(
+	        	"code"		=> 	1,
+	        	"msg"		=>	"成功上传".$urlnum."张图片！"
+	        );
+	        echo json_encode($rejson);
+	        exit;
+        }
+
+        //图片写入数据库
+        function indb($datas){
+	        $database = $this->database;
+	        $date = date('Y-m-d',time());
+	        $insert = $database->insert("imginfo",[
+	        	"path"		=>	$datas['path'],
+	        	"ip"		=>	"127.0.0.1",
+	        	"ua"		=>	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36",
+	        	"date"		=>	$date,
+	        	"dir"		=>	$datas['dir'],
+	        	"compress"	=>	0,
+	        	"level"		=>	0
+	        ]);
+	        return $insert;
         }
     }
 
